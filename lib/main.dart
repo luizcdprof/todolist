@@ -26,8 +26,8 @@ class MinhaTelaPrincipal extends StatefulWidget {
 }
 
 class _MinhaTelaPrincipalState extends State<MinhaTelaPrincipal> {
-  // A memória da nossa lista
-  List<String> tarefas = [];
+  // NOVA ESTRUTURA: Agora a lista guarda Mapas (Chave e Valor) em vez de apenas texto
+  List<Map<String, dynamic>> tarefas = [];
 
   // O "gancho" para capturar o texto do teclado
   final TextEditingController _controleTexto = TextEditingController();
@@ -53,10 +53,13 @@ class _MinhaTelaPrincipalState extends State<MinhaTelaPrincipal> {
             // Botão de salvar
             ElevatedButton(
               onPressed: () {
-                // Se o texto não estiver vazio, adicionamos na lista
+                // Se o texto não estiver vazio, adicionamos o Mapa na lista
                 if (_controleTexto.text.isNotEmpty) {
                   setState(() {
-                    tarefas.add(_controleTexto.text);
+                    tarefas.add({
+                      'titulo': _controleTexto.text,
+                      'concluida': false, // Toda tarefa nova começa como não concluída
+                    });
                   });
                   _controleTexto.clear(); // Limpa a caixa para a próxima
                   Navigator.pop(context); // Fecha a janelinha
@@ -83,12 +86,39 @@ class _MinhaTelaPrincipalState extends State<MinhaTelaPrincipal> {
           : ListView.builder(
               itemCount: tarefas.length,
               itemBuilder: (context, index) {
+                // Criamos uma variável local para facilitar a leitura do status da tarefa atual
+                final bool estaConcluida = tarefas[index]['concluida'];
+
                 return ListTile(
-                  leading: const Icon(
-                    Icons.check_box_outline_blank,
+                  // 1. MARCAR COMO CONCLUÍDA (Lado Esquerdo): Ícone muda dinamicamente
+                  leading: Icon(
+                    estaConcluida ? Icons.check_box : Icons.check_box_outline_blank,
                     color: Colors.green,
                   ),
-                  title: Text(tarefas[index]),
+                  // O texto ganha um efeito de "riscado" se a tarefa estiver concluída
+                  title: Text(
+                    tarefas[index]['titulo'],
+                    style: TextStyle(
+                      decoration: estaConcluida ? TextDecoration.lineThrough : null,
+                      color: estaConcluida ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                  // 2. EXCLUIR TAREFA (Lado Direito): Botão de lixeira
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        tarefas.removeAt(index); // Remove o item da lista pela posição (índice)
+                      });
+                    },
+                  ),
+                  // Ação ao clicar em qualquer lugar da linha da tarefa
+                  onTap: () {
+                    setState(() {
+                      // Inverte o valor booleano atual (se era true vira false, se era false vira true)
+                      tarefas[index]['concluida'] = !tarefas[index]['concluida'];
+                    });
+                  },
                 );
               },
             ),
